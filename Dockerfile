@@ -1,4 +1,4 @@
-FROM golang:alpine
+FROM alpine
 LABEL version=0.0.3
 
 #RUN apk --update add redis
