@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+	<head>
+		<h2>Request Dump</h2>
+	</head>
+	<body>
+		<h3>Request Info</h3>
+		<ul>
+			<li> Verb: {{.req.Method}} </li>
+			<li> Host: {{.req.Host}} </li>
+			<li> RequestURI: {{.req.RequestURI}} </li>
+		</ul>
+		<h3>Headers</h3>
+		<ul>{{range $headerName, $headerValues := .req.Header}}
+				<li> <b>{{ $headerName }}</b>:
+				 {{- if gt (len $headerValues) 1 -}}
+					<ul>{{range $headerValue := $headerValues}}
+						<li>{{ $headerValue }}</li>
+					{{- end}}</ul>
+                 {{else}}{{index $headerValues 0}}{{end}}
+				</li>
+		{{end}}</ul>
+		<h3>Body (2K max)</h3>
+<pre>
+{{.body}}
+</pre>
+</body>
+</html>
