@@ -51,7 +51,7 @@ func main() {
 		_, _ = fmt.Fprintf(os.Stderr, "Error reading template file: %v\n", err)
 		os.Exit(1)
 	}
-	sprig.FuncMap()
+	fmt.Printf("Template from %s successfully read\nContents:\n%s\n", templatePath, string(fileData))
 
 	tmpl, err := template.New("dump").Funcs(sprig.FuncMap()).Parse(string(fileData))
 	if err != nil {
