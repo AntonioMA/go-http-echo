@@ -28,4 +28,4 @@ The template used to format the answer is a normal Go template, extended with th
 * 0.0.2 Add a base-64 encoding of the body
 * 0.0.3 Cut the read slice to the actual size read
 * 0.0.4 Add support for websockets
-
+* 0.0.5 Unbreak HTML Processing

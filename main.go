@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	htmlTemplate "html/template"
 	"io"
 	"math"
 	"net/http"
@@ -13,6 +14,10 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/masterminds/sprig"
 )
+
+type genericTemplate interface {
+	Execute(wr io.Writer, data interface{}) error
+}
 
 func mirrorWebsocket(conn *websocket.Conn, req *http.Request) {
 	// The only thing this websocket does is mirroring the input. Have fun.
@@ -32,7 +37,7 @@ func mirrorWebsocket(conn *websocket.Conn, req *http.Request) {
 	}
 }
 
-func echoAll(outputTmpl *template.Template) func(http.ResponseWriter, *http.Request) {
+func echoAll(outputTmpl genericTemplate, contentType string) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		fmt.Printf("Processing request %v\n", req)
 
@@ -47,7 +52,7 @@ func echoAll(outputTmpl *template.Template) func(http.ResponseWriter, *http.Requ
 			return
 		}
 
-		res.Header().Set("Content-Type", "text/html")
+		res.Header().Set("Content-Type", contentType)
 		res.WriteHeader(200)
 		bodyAsStr := template2.ExtendedString("")
 		if req.Body != nil {
@@ -76,8 +81,11 @@ func echoAll(outputTmpl *template.Template) func(http.ResponseWriter, *http.Requ
 
 func main() {
 	var templatePath string
+	var contentType string
 	flag.StringVar(&templatePath, "t", "./default_html.tmpl", "template path")
 	flag.StringVar(&templatePath, "template", "./default_html.tmpl", "template path")
+	flag.StringVar(&contentType, "c", "text/html", "content type")
+	flag.StringVar(&contentType, "content-type", "text/html", "content type")
 	flag.Parse()
 	fileData, err := os.ReadFile(templatePath)
 	if err != nil {
@@ -86,12 +94,17 @@ func main() {
 	}
 	fmt.Printf("Template from %s successfully read\nContents:\n%s\n", templatePath, string(fileData))
 
-	tmpl, err := template.New("dump").Funcs(template.FuncMap(sprig.FuncMap())).Parse(string(fileData))
+	var tmpl genericTemplate
+	if contentType != "text/html" {
+		tmpl, err = template.New("dump").Funcs(template.FuncMap(sprig.FuncMap())).Parse(string(fileData))
+	} else {
+		tmpl, err = htmlTemplate.New("dump").Funcs(sprig.FuncMap()).Parse(string(fileData))
+	}
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error parsing template: %v\n", err)
 		os.Exit(1)
 	}
-	if err := http.ListenAndServe(":8128", http.HandlerFunc(echoAll(tmpl))); err != nil {
+	if err := http.ListenAndServe(":8128", http.HandlerFunc(echoAll(tmpl, contentType))); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error starting server: %v\n", err)
 		os.Exit(1)
 	}
