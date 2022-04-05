@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"strings"
 	"text/template"
 
 	template2 "github.com/AntonioMA/go-http-echo/template"
@@ -41,7 +42,7 @@ func echoAll(outputTmpl genericTemplate, contentType string) func(http.ResponseW
 	return func(res http.ResponseWriter, req *http.Request) {
 		fmt.Printf("Processing request %v\n", req)
 
-		if req.Header.Get("connection") == "Upgrade" && req.Header.Get("upgrade") == "websocket" {
+		if strings.ToLower(req.Header.Get("connection")) == "upgrade" && strings.ToLower(req.Header.Get("upgrade")) == "websocket" {
 			upgrader := websocket.Upgrader{}
 			conn, err := upgrader.Upgrade(res, req, nil)
 			if err != nil {
