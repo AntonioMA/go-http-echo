@@ -1,0 +1,6 @@
+{{.req.Method}} {{.req.Host}} {{.req.RequestURI }}
+{{range $headerName, $headerValues := .req.Header -}}
+{{range $headerValue := $headerValues -}}
+{{ $headerName }}: {{ $headerValue }}
+{{end}}{{end}}
+{{.body}}
