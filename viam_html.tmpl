@@ -1,0 +1,197 @@
+<!doctype html>
+<html>
+	<head>
+		<script defer src="https://{{ .Values.idpName }}{{ .Values.region }}.{{ .Values.environment }}.{{ .Values.domain }}/test/js/test-common.js"></script>
+		<script defer src="https://{{ .Values.idpName }}{{ .Values.region }}.{{ .Values.environment }}.{{ .Values.domain }}/test/js/html-elems.js"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/pretty-print-json@1.2/dist/pretty-print-json.min.js"></script>
+		<script defer src="https://handy-collapse.netlify.app/js/handy-collapse.js"></script>
+		<script>
+			let headers = JSON.parse({{ toJson .req.Header }});
+			const tokenToObject = tokenPart => JSON.parse(atob(tokenPart));
+			window.addEventListener('load', () => {
+                Object.keys(headers).forEach(k => headers[k.toLowerCase()] = headers[k]);
+                const tokenDiv = document.getElementById("tokenInfo");
+                if (headers['x-vonage-access-token']) {
+                    const token = headers['x-vonage-access-token'][0];
+                    const tokenParts = token.split('.');
+                    HTMLElems.createElementAt(tokenDiv, 'h3', null, "Header");
+                    let elem = document.createElement('pre');
+                    elem.className = 'json-container';
+                    elem.innerHTML = prettyPrintJson.toHtml(tokenToObject(tokenParts[0]));
+                    tokenDiv.appendChild(elem);
+                    HTMLElems.createElementAt(tokenDiv, 'h3', null, "Content");
+                    elem = document.createElement('pre');
+                    elem.className = 'json-container';
+                    elem.innerHTML = prettyPrintJson.toHtml(tokenToObject(tokenParts[1]));
+                    tokenDiv.appendChild(elem);
+                    HTMLElems.createElementAt(tokenDiv, 'h3', null, "Body (2K max)");
+                }
+                new HandyCollapse({ nameSpace: "tab", closeOthers: true, isAnimation: true, animationSpeed: 300 });
+			});
+		</script>
+		<style>
+			body {
+				padding: 20px 40px;
+				margin: 0;
+				box-sizing: border-box;
+				width: 100%;
+				font-family: Arial, Helvetica, sans-serif;
+				font-size: 10px;
+				color: #000;
+				font-weight: 300;
+			}
+			header {
+				margin-bottom: 20px;
+				display: flex;
+				flex-direction: row;
+				align-items: center;
+				justify-content: center;
+			}
+			h1 {
+				font-size: 1.8rem;
+				display: inline-block;
+				padding: 0;
+			}
+			.logo {
+				position: absolute;
+				left: 40px;
+			}
+			h2 {
+				margin: 0 40px 0 0;
+				cursor: pointer;
+				font-size: 1.2rem;
+				display: inline-block;
+				font-weight: 400;
+			}
+			h2.is-active {
+				color: #881fff;
+				transform: scale(1.1);
+				transition: transform .3s;
+			}
+			h3:first-child {
+				margin-top: 0;
+			}
+			.styled-table {
+				width:100%;
+				table-layout: fixed;
+				overflow-wrap: break-word;
+				border-collapse: collapse;
+				margin: 0;
+				font-size: 0.9em;
+				font-family: sans-serif;
+				width: 100%;
+				max-width: 100%;
+			}
+			.styled-table thead tr, h3 {
+				background-color: rgba(0,0,0, .8);
+				color: #ffffff;
+				text-align: left;
+				font-size: 1.1rem;
+			}
+			.styled-table thead tr, h3, .styled-table thead th {
+				font-weight: 400;
+			}
+			.styled-table tbody tr td:first-child {
+				font-weight: 600;
+			}
+			.styled-table th, .styled-table td, h3 {
+				padding: 12px 15px;
+				white-space: normal;
+				margin: 0;
+			}
+			.styled-table tbody tr {
+				border-bottom: 1px solid #dddddd;
+				font-size: 1rem;
+			}
+			.styled-table.headers td:first-child {
+				width: 20%;
+				max-width: 20%;
+			}
+			.legend {
+				margin: 15px 10px 0 0;
+				padding: 0;
+				font-style: italic;
+				text-align: right;
+				font-size: 1rem;
+				
+			}
+			a, a:active, a:visited {
+				text-decoration: none;
+				color: #000;
+			}
+			.tabs {
+				display: flex;
+				flex-direction: row;
+				margin-bottom: 20px;
+				align-items: center;
+				justify-content: center;
+			}
+			.json-container {
+				font-size: 0.85rem;
+				margin: 0;
+				padding: 12px 15px;
+				font-weight: 300;
+			}
+			.json-container:nth-of-type(even), .styled-table tbody tr:nth-of-type(even) {
+				background-color: #f3f3f3;
+			}
+			.box {
+				visibility: hidden;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<img class="logo" src="https://{{ .Values.idpName }}{{ .Values.region }}.{{ .Values.environment }}.{{ .Values.domain }}/img/vonage.8efaa2ed.svg">
+			<h1>VIAM - Request Dump Template</h1>
+		</header>
+		<section class="tabs">
+			<h2 data-tab-control="content01" aria-expanded="true" aria-controls="basicContent01">Request Information</h2>
+			<h2 data-tab-control="content02" aria-expanded="false" aria-controls="basicContent02">Headers</h2>
+			<h2 data-tab-control="content03" aria-expanded="false" aria-controls="tokenInfo">Token Information</h2>
+		</section>
+		<div id="basicContent01" class="is-active box" data-tab-content="content01" aria-hidden="true">
+			<table class="styled-table">
+				<thead>
+					<tr>
+						<th>Verb</th>
+						<th>Host</th>
+						<th>RequestURI</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>{{.req.Method}}</td>
+						<td>{{.req.Host}}</td>
+						<td>{{.req.RequestURI}}</td>
+					</tr>
+				</tbody>
+			</table>
+			<p class="legend">* You can customize this on <a href="helm/sample-app/files/output_html.tmpl">helm/sample-app/files/output_html.tmpl</a></p>
+		</div>
+		<div id="basicContent02" class="box" data-tab-content="content02" aria-hidden="true">
+			<table class="styled-table">
+				<thead>
+					<tr>
+						<th style="width: 20%">Name</th>
+						<th>Value</th>
+					</tr>
+				</thead>
+				<tbody>{{range $headerName, $headerValues := .req.Header}}
+					<tr>
+						<td>{{ $headerName }}</td>
+						<td>{{- if gt (len $headerValues) 1 -}}
+							<ul>{{range $headerValue := $headerValues}}
+								<li>{{ $headerValue }}</li>
+								{{- end}}</ul>
+							{{else}}{{index $headerValues 0}}{{end}}
+						</td>
+					</tr>
+					{{end}}
+				</tbody>
+			</table>
+		</div>
+		<div id="tokenInfo" class="box" data-tab-content="content03" aria-hidden="true"></div>
+        <link rel=stylesheet href=https://cdn.jsdelivr.net/npm/pretty-print-json@1.2/dist/pretty-print-json.css>
+	</body>
+</html>
