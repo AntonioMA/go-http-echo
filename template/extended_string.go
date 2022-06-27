@@ -3,7 +3,6 @@ package template
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -33,7 +32,6 @@ func (es ExtendedString) Split(sep string) []ExtendedString {
 // the file as an string
 func (es ExtendedString) LoadFile() ExtendedString {
 	if fileData, err := ioutil.ReadFile(string(es)); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error reading file %s: %v", es, fileData)
 		return ""
 	} else {
 		return ExtendedString(fileData)
@@ -46,7 +44,6 @@ func (es ExtendedString) LoadFile() ExtendedString {
 func (es ExtendedString) LoadRelativeFile(basePath string) ExtendedString {
 	fullPath := strings.Join([]string{basePath, string(es)}, string(os.PathSeparator))
 	if fileData, err := ioutil.ReadFile(fullPath); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error reading file %s: %v", fullPath, fileData)
 		return ""
 	} else {
 		return ExtendedString(fileData)
@@ -72,7 +69,6 @@ func (es ExtendedString) Fields() []ExtendedString {
 // ToJSON returns the es string JSONified.
 func (es ExtendedString) ToJSON() ExtendedString {
 	if data, err := json.Marshal(es); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error converting to json %s: %v", es, err)
 		return ""
 	} else {
 		return ExtendedString(data)
