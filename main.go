@@ -83,17 +83,21 @@ func echoAll(outputTmpl genericTemplate, contentType string) func(http.ResponseW
 func main() {
 	var templatePath string
 	var contentType string
+	var debug bool
 	flag.StringVar(&templatePath, "t", "./default_html.tmpl", "template path")
 	flag.StringVar(&templatePath, "template", "./default_html.tmpl", "template path")
 	flag.StringVar(&contentType, "c", "text/html", "content type")
 	flag.StringVar(&contentType, "content-type", "text/html", "content type")
+	flag.BoolVar(&debug, "debug", false, "enable debug mode")
 	flag.Parse()
 	fileData, err := os.ReadFile(templatePath)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error reading template file: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Template from %s successfully read\nContents:\n%s\n", templatePath, string(fileData))
+	if debug {
+		fmt.Printf("Template from %s successfully read\nContents:\n%s\n", templatePath, string(fileData))
+	}
 
 	var tmpl genericTemplate
 	if contentType != "text/html" {
