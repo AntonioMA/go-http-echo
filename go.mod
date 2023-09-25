@@ -12,5 +12,5 @@ require (
 	github.com/masterminds/sprig v2.22.0+incompatible
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	golang.org/x/crypto v0.0.0-20220314234659-1baeb1ce4c0b // indirect
 )
