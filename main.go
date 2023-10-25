@@ -12,8 +12,8 @@ import (
 	"text/template"
 
 	template2 "github.com/AntonioMA/go-http-echo/template"
+	"github.com/Masterminds/sprig/v3"
 	"github.com/gorilla/websocket"
-	"github.com/masterminds/sprig"
 )
 
 type genericTemplate interface {
