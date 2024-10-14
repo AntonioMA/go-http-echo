@@ -1,5 +1,5 @@
 FROM alpine:3
-LABEL version=0.0.10
+LABEL version=0.0.11
 
 #RUN apk --update add redis
 
