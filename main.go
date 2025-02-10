@@ -1,12 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	htmlTemplate "html/template"
 	"io"
 	"math"
+	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"text/template"
@@ -59,7 +62,7 @@ func echoAll(outputTmpl genericTemplate, contentType string) func(http.ResponseW
 		if req.Body != nil {
 			defer req.Body.Close()
 			size := int(math.Min(float64(16384), float64(req.ContentLength)))
-			if size <= 0 { // Gotta love Armadillo
+			if size <= 0 {
 				size = 2048
 			}
 			buff := make([]byte, size)
@@ -73,11 +76,71 @@ func echoAll(outputTmpl genericTemplate, contentType string) func(http.ResponseW
 			"req":  req,
 			"body": bodyAsStr,
 		}
+		_ = req.ParseForm()
+		if req.Form.Get("json") == "1" || req.Header.Get("Accept") == "application/json" {
+			tmplData["req"] = (*marshableRequest)(req)
+			data, err := json.Marshal(tmplData)
+			if err != nil {
+				res.WriteHeader(http.StatusInternalServerError)
+				_, _ = res.Write(([]byte)(fmt.Sprintf(`{"error": "%s"}`, err)))
+				return
+			}
+			res.Header().Set("Content-Type", "application/json")
+			res.WriteHeader(http.StatusOK)
+			_, _ = res.Write(data)
+			return
+		}
+
 		if err := outputTmpl.Execute(res, tmplData); err != nil {
 			_, _ = res.Write(([]byte)(fmt.Sprintf("<h3>Error executing template: %v</h3>", err)))
 		}
 		_ = outputTmpl.Execute(os.Stdout, tmplData)
 	}
+}
+
+type marshableRequest http.Request
+
+type auxRequest struct {
+	Method           string
+	URL              *url.URL
+	Proto            string
+	ProtoMajor       int
+	ProtoMinor       int
+	Header           http.Header
+	ContentLength    int64
+	TransferEncoding []string
+	Close            bool
+	Host             string
+	Form             url.Values
+	PostForm         url.Values
+	MultipartForm    *multipart.Form
+	Trailer          http.Header
+	RemoteAddr       string
+	RequestURI       string
+	Pattern          string
+}
+
+func (r *marshableRequest) MarshalJSON() ([]byte, error) {
+	aux := auxRequest{
+		Method:           r.Method,
+		URL:              r.URL,
+		Proto:            r.Proto,
+		ProtoMajor:       r.ProtoMajor,
+		ProtoMinor:       r.ProtoMinor,
+		Header:           r.Header,
+		ContentLength:    r.ContentLength,
+		TransferEncoding: r.TransferEncoding,
+		Close:            r.Close,
+		Host:             r.Host,
+		Form:             r.Form,
+		PostForm:         r.PostForm,
+		MultipartForm:    r.MultipartForm,
+		Trailer:          r.Trailer,
+		RemoteAddr:       r.RemoteAddr,
+		RequestURI:       r.RequestURI,
+		Pattern:          r.Pattern,
+	}
+	return json.Marshal(aux)
 }
 
 func main() {
@@ -101,7 +164,7 @@ func main() {
 
 	var tmpl genericTemplate
 	if contentType != "text/html" {
-		tmpl, err = template.New("dump").Funcs(template.FuncMap(sprig.FuncMap())).Parse(string(fileData))
+		tmpl, err = template.New("dump").Funcs(sprig.FuncMap()).Parse(string(fileData))
 	} else {
 		tmpl, err = htmlTemplate.New("dump").Funcs(sprig.FuncMap()).Parse(string(fileData))
 	}
