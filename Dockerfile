@@ -1,10 +1,11 @@
-FROM alpine:3
+FROM --platform=$TARGETPLATFORM alpine:3
 LABEL version=0.0.12
 
-#RUN apk --update add redis
+ARG TARGETARCH
+ARG TARGETOS=linux
 
 WORKDIR /go/bin
-COPY ./output/linux/go-http-echo .
+COPY ./output/${TARGETOS}.${TARGETARCH}/go-http-echo* ./go-http-echo
 COPY ./default_html.tmpl .
 
 CMD ./go-http-echo

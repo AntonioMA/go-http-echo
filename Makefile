@@ -4,7 +4,7 @@ CONFIG_DIR ?= undef
 # Platforms to build for. You can add or remove platforms here
 # Note that at this time, Linux build does not work outside of linux...
 LOCAL_PLATFORM := $(shell uname -s | tr A-Z a-z)
-PLATFORMS = linux darwin
+PLATFORMS = linux.amd64 darwin linux.arm64
 
 SOURCE_FILES := $(shell find . -name '*.go')
 
@@ -43,8 +43,16 @@ all: showconfig $(OUTPUT_PLATFORM_DIRS) $(PLATFORMS)
 
 local: showconfig $(OUTPUT_PLATFORM_DIRS) $(LOCAL_PLATFORM)
 
-docker-img: Dockerfile $(SOURCE_FILES) linux
+docker-img: Dockerfile $(SOURCE_FILES) linux.amd64
 	@docker build . -t antonioma/http-echo:latest -t antonioma/http-echo:$(COMMIT) -t antonioma/http-echo:$(VERSION)
+
+
+docker-img: Dockerfile $(SOURCE_FILES) linux.amd64 linux.arm64
+	@docker buildx build --platform linux/amd64,linux/arm64 \
+		-t antonioma/http-echo:latest \
+		-t antonioma/http-echo:$(COMMIT) \
+		-t antonioma/http-echo:$(VERSION) \
+		--push .
 
 docker-run: docker-img
 	@if [ ! -d $(REAL_CONFIG_DIR) ];  then echo "Need a valid config directory to create the image"; exit 1; fi
@@ -61,12 +69,20 @@ $(OUTPUT_PLATFORM_DIRS):
 	@mkdir -p $@
 
 $(PLATFORMS): OUTPUT_DIR = $(OUTPUT_BASE_DIR)$@/
+$(PLATFORMS): GOOS=$@
+
+linux.arm64: GOARCH=arm64
+linux.arm64: GOOS=linux
+
+linux.amd64: GOARCH=amd64
+linux.amd64: GOOS=linux
+
 
 $(PLATFORMS):
 	@echo Building $@ from $(BUILD_DIR)
 	@rm -f $(OUTPUT_DIR)$(BINARY)
 	@cd $(BUILD_DIR); \
-	GO111MODULE=on GOOS=$@ GOARCH=${GOARCH} GOPRIVATE=$(GOPRIVATE) $(GO) build -v ${LDFLAGS} -o $(OUTPUT_DIR)$(BINARY) .
+	GO111MODULE=on GOOS=${GOOS} GOARCH=${GOARCH} GOPRIVATE=$(GOPRIVATE) $(GO) build -v ${LDFLAGS} -o $(OUTPUT_DIR)$(BINARY) .
 
 run: clean all
 	cd $(OUTPUT_BASE_DIR)$(LOCAL_PLATFORM); \
